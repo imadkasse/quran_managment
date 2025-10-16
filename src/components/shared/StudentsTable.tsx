@@ -1,142 +1,116 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, User, Calendar, GraduationCap, Users } from "lucide-react";
+import { Student } from "@/types/types";
+import { useUser } from "@/store/userStore";
+import { StudentCard } from "../students/StudentCard";
 
-type UserRole = "TEACHER" | "PARENT";
-
-interface Student {
-  id: string;
-  full_name: string;
-  age: number;
-  level: string;
-  parent_name?: string;
+interface Props {
+  students: Student[];
 }
 
-export const StudentsTable: React.FC = () => {
-  const user = {
-    role: "TEACHER", // يمكن أن يكون "ADMIN" أو "TEACHER" أو "PARENT"
-    //... باقي البيانات أعملها لاحقا
-  };
-  const students: Student[] = [
-    {
-      id: "STD001",
-      full_name: "أحمد محمد العلي",
-      age: 15,
-      level: "الحزب الأول",
-      parent_name: "محمد العلي",
-    },
-    {
-      id: "STD002",
-      full_name: "فاطمة أحمد السعيد",
-      age: 14,
-      level: "الحزب الثالث",
-      parent_name: "أحمد السعيد",
-    },
-    {
-      id: "STD003",
-      full_name: "عمر خالد الحسن",
-      age: 16,
-      level: "الحزب الأول",
-      parent_name: "خالد الحسن",
-    },
-    {
-      id: "STD004",
-      full_name: "سارة يوسف المحمود",
-      age: 13,
-      level: "الحزب الأول",
-      parent_name: "يوسف المحمود",
-    },
-    {
-      id: "STD005",
-      full_name: "محمود علي الشريف",
-      age: 15,
-      level: "الحزب الأول",
-      parent_name: "علي الشريف",
-    },
-  ];
+export const StudentsTable = ({ students }: Props) => {
+  const { user } = useUser();
+  // using in Modal (studentCard)
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+
   const getStudentLink = (studentId: string) => {
-    return user.role === "TEACHER"
+    return user?.role === "TEACHER"
       ? `/teacher/students/${studentId}`
       : `/parent/students/${studentId}`;
   };
 
   // Mobile Card View Component
   const MobileStudentCard: React.FC<{ student: Student }> = ({ student }) => (
-    <Card className="border-border hover:border-primary/30 transition-all duration-300 hover:shadow-lg">
-      <CardContent className="p-4">
-        <div className="space-y-3">
-          {/* Header with Name */}
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                <User className="w-6 h-6 text-primary" />
+    <>
+      <Card className="border-border hover:border-primary/30 transition-all duration-300 hover:shadow-lg">
+        <CardContent className="p-4">
+          <div className="space-y-3">
+            {/* Header with Name */}
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                  <User className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground text-lg">
+                    {student.full_name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    معرف: {student.id}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-foreground text-lg">
-                  {student.full_name}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  معرف: {student.id}
-                </p>
+            </div>
+
+            {/* Student Info */}
+            <div className="grid grid-cols-2 gap-3 pt-3 border-t border-border">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-accent/10 rounded-lg">
+                  <Calendar className="w-4 h-4 text-accent" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">العمر</p>
+                  <p className="font-medium text-foreground">
+                    {student.age} سنة
+                  </p>
+                </div>
               </div>
+
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-secondary/20 rounded-lg">
+                  <GraduationCap className="w-4 h-4 text-secondary-foreground" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">المستوى</p>
+                  <p className="font-medium text-foreground">{student.level}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Parent Name (Teacher Only) */}
+            {user?.role === "TEACHER" && student.parent_id && (
+              <div className="flex items-center gap-2 pt-2">
+                <div className="p-2 bg-muted rounded-lg">
+                  <Users className="w-4 h-4 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">ولي الأمر</p>
+                  <p className="font-medium text-foreground">
+                    {student.parent?.username}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Action Button */}
+            <div className="pt-3 border-t border-border">
+              <Button
+                onClick={() => {
+                  setSelectedStudent(student); // ✅ نحفظ الطالب الحالي
+                }}
+                asChild
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                <h1>
+                  <span>عرض التفاصيل</span>
+                  <ArrowRight className="w-4 h-4 mr-2" />
+                </h1>
+              </Button>
             </div>
           </div>
-
-          {/* Student Info */}
-          <div className="grid grid-cols-2 gap-3 pt-3 border-t border-border">
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-accent/10 rounded-lg">
-                <Calendar className="w-4 h-4 text-accent" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">العمر</p>
-                <p className="font-medium text-foreground">{student.age} سنة</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-secondary/20 rounded-lg">
-                <GraduationCap className="w-4 h-4 text-secondary-foreground" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">المستوى</p>
-                <p className="font-medium text-foreground">{student.level}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Parent Name (Teacher Only) */}
-          {user.role === "TEACHER" && student.parent_name && (
-            <div className="flex items-center gap-2 pt-2">
-              <div className="p-2 bg-muted rounded-lg">
-                <Users className="w-4 h-4 text-muted-foreground" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">ولي الأمر</p>
-                <p className="font-medium text-foreground">
-                  {student.parent_name}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Action Button */}
-          <div className="pt-3 border-t border-border">
-            <Button
-              asChild
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
-              <a href={getStudentLink(student.id)}>
-                <span>عرض التفاصيل</span>
-                <ArrowRight className="w-4 h-4 mr-2" />
-              </a>
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+      <StudentCard
+        student={selectedStudent}
+        open={!!selectedStudent}
+        onEdit={() => alert(`تعديل الطالب${selectedStudent?.full_name}`)}
+        onDelete={() => alert(`تعديل الطالب${selectedStudent?.full_name}`)}
+        onClose={() => setSelectedStudent(null)}
+      />
+    </>
   );
 
   // Desktop Table View
@@ -155,7 +129,7 @@ export const StudentsTable: React.FC = () => {
               <th className="text-right px-4 py-3 text-foreground font-semibold border-b border-border">
                 المستوى
               </th>
-              {user.role === "TEACHER" && (
+              {user?.role === "TEACHER" && (
                 <th className="text-right px-4 py-3 text-foreground font-semibold border-b border-border">
                   ولي الأمر
                 </th>
@@ -169,7 +143,7 @@ export const StudentsTable: React.FC = () => {
             {students.length === 0 ? (
               <tr>
                 <td
-                  colSpan={user.role === "TEACHER" ? 5 : 4}
+                  colSpan={user?.role === "TEACHER" ? 5 : 4}
                   className="text-center py-8 text-muted-foreground"
                 >
                   <div className="flex flex-col items-center gap-2">
@@ -211,12 +185,12 @@ export const StudentsTable: React.FC = () => {
                       {student.level}
                     </span>
                   </td>
-                  {user.role === "TEACHER" && (
+                  {user?.role === "TEACHER" && (
                     <td className="px-4 py-4 text-foreground">
-                      {student.parent_name ? (
+                      {student.parent_id ? (
                         <div className="flex items-center gap-2">
                           <Users className="w-4 h-4 text-muted-foreground" />
-                          <span>{student.parent_name}</span>
+                          <span>{student.parent?.username}</span>
                         </div>
                       ) : (
                         <span className="text-muted-foreground text-sm">
@@ -227,14 +201,14 @@ export const StudentsTable: React.FC = () => {
                   )}
                   <td className="px-4 py-4 text-left">
                     <Button
+                      onClick={() => {
+                        setSelectedStudent(student);
+                      }}
                       asChild
                       size="sm"
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer"
                     >
-                      <a href={getStudentLink(student.id)}>
-                        <span>عرض</span>
-                        <ArrowRight className="w-4 h-4 mr-2" />
-                      </a>
+                      <span>عرض</span>
                     </Button>
                   </td>
                 </tr>
@@ -258,7 +232,7 @@ export const StudentsTable: React.FC = () => {
               </div>
               <div>
                 <CardTitle className="text-foreground text-2xl">
-                  {user.role === "TEACHER" ? "قائمة الطلاب" : "أبنائي"}
+                  {user?.role === "TEACHER" ? "قائمة الطلاب" : "أبنائي"}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
                   إجمالي: {students.length}{" "}

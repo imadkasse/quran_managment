@@ -11,14 +11,17 @@ import {
   Sun,
   Menu,
   X,
+  UserStar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { usePathname, useRouter } from "next/navigation";
 import useTheme from "@/hooks/useTheme";
 import Link from "next/link";
+import { useUser } from "@/store/userStore";
+import { Database } from "@/types/supabase.types";
 
-type UserRole = "ADMIN" | "TEACHER" | "PARENT";
+type UserRole = Database["public"]["Enums"]["user_role"];
 
 interface NavItem {
   title: string;
@@ -51,6 +54,7 @@ const roleConfigs: Record<UserRole, RoleConfig> = {
         icon: LayoutDashboard,
       },
       { title: "الطلاب", href: "/teacher/students", icon: GraduationCap },
+      { title: "الأولياء", href: "/teacher/parents", icon: UserStar },
       { title: "الحضور", href: "/teacher/attendance", icon: UserCheck },
       { title: "التقارير", href: "/teacher/reports", icon: FileText },
       { title: "الإشعارات", href: "/teacher/notifications", icon: Bell },
@@ -71,14 +75,28 @@ const roleConfigs: Record<UserRole, RoleConfig> = {
       { title: "الإشعارات", href: "/parent/notifications", icon: Bell },
     ],
   },
+  SUPERADMIN: {
+    label: "ولي أمر",
+    color: "var(--chart-4)",
+    items: [
+      {
+        title: "لوحة التحكم",
+        href: "/parent/dashboard",
+        icon: LayoutDashboard,
+      },
+      { title: "الأطفال", href: "/parent/students", icon: GraduationCap },
+      { title: "الحضور", href: "/parent/attendance", icon: UserCheck },
+      { title: "التقارير", href: "/parent/reports", icon: FileText },
+      { title: "الإشعارات", href: "/parent/notifications", icon: Bell },
+    ],
+  },
 };
 
 const SideBar: React.FC = () => {
-  const user = {
-    role: "TEACHER", // يمكن أن يكون "ADMIN" أو "TEACHER" أو "PARENT"
-    //... باقي البيانات أعملها لاحقا
-  };
-  const currentConfig = roleConfigs[user.role as UserRole];
+  const { user } = useUser();
+  
+  const currentConfig = roleConfigs[user?.role as UserRole || "TEACHER"];
+  
   const router = useRouter();
   const pathName = usePathname();
   const [activeLink, setActiveLink] = useState(pathName);

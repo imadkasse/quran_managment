@@ -7,8 +7,10 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Mail, Eye, EyeOff, Loader2 } from "lucide-react";
-import { login } from "@/services/auth";
+import { getUserFromDb, login } from "@/services/auth";
 import showToast from "@/utils/showToast";
+import { useUser } from "@/store/userStore";
+import { useRouter } from "next/navigation";
 
 // تعريف نوع بيانات تسجيل الدخول
 type LoginFormData = {
@@ -21,6 +23,8 @@ export default function Login() {
   const [password, setPassword] = useState<LoginFormData["password"]>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const { setUser } = useUser();
+  const router = useRouter();
 
   // نوع الحدث هو FormEvent<HTMLFormElement>
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -28,14 +32,17 @@ export default function Login() {
     setLoading(true);
     try {
       const formData: LoginFormData = { email, password };
-      console.log("Login attempt:", formData);
       const data = await login(formData.email, formData.password);
-      console.log("Login successful:", data);
+      const user_id = data.user.id;
+      const userData = await getUserFromDb(user_id);
+      setUser(userData);
       showToast("success", "تم تسجيل الدخول بنجاح!");
       // إعادة تعيين الحقول بعد تسجيل الدخول الناجح
       setEmail("");
       setPassword("");
+
       // get the role from data and redirect based on role
+      router.push(`/${userData?.role.toLowerCase()}/dashboard`);
     } catch (error) {
       console.error("Login error:", error);
       showToast(
@@ -130,7 +137,7 @@ export default function Login() {
               className="mt-6 w-full bg-green-600 hover:bg-amber-500 hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300"
               disabled={loading}
             >
-              {loading ? <Loader2 className="animate-spin "/> : "تسجيل الدخول"}
+              {loading ? <Loader2 className="animate-spin " /> : "تسجيل الدخول"}
             </Button>
           </form>
 

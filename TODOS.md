@@ -32,7 +32,9 @@ for reports => finish
 
 ADD UI 
 
-1: all pages inside /teahcer
-1: all pages inside /teahcer
-ku
+1: all pages inside /teahcer done
+2: all pages inside /parent
+3: all pages inside /admin 
+
+1: start add logic to /teacher pages 
 
