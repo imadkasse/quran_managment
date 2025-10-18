@@ -1,11 +1,13 @@
-import { supabaseAdmin } from "@/supabase/server";
 import { supabase } from "@/supabase/supabase";
 import { Database } from "@/types/supabase.types";
-import { AddParentFormData } from "@/types/types";
 import { PostgrestError } from "@supabase/supabase-js";
 
 type Student = Database["public"]["Tables"]["students"]["Row"];
 type Parent = Database["public"]["Tables"]["users"]["Row"];
+type Evaluation = Database["public"]["Tables"]["evaluations"]["Row"];
+type EvaluationInsert = Database["public"]["Tables"]["evaluations"]["Insert"];
+type EvaluationUpdate = Database["public"]["Tables"]["evaluations"]["Update"];
+
 type StudentInsert = Database["public"]["Tables"]["students"]["Insert"];
 type StudentUpdate = Database["public"]["Tables"]["students"]["Update"];
 type ParentInStudent = {
@@ -47,36 +49,72 @@ export async function getAllMyParent(): Promise<Parent[]> {
   const res = await supabase.from("users").select("*").eq("role", "PARENT");
   return (await handleResponse<Parent[]>(res)) ?? [];
 }
-// this function need to 
-export async function insertParent(parent: AddParentFormData) {
-  // 1) إنشاء المستخدم في auth
-  const authUser = await supabaseAdmin.auth.admin.createUser({
-    email: parent.email,
-    password: parent.username || "12345678",
-    email_confirm: true,
-  });
+export async function getAllMyEvaluations(teacherId: string) {
+  const res = await supabase
+    .from("evaluations")
+    .select("*")
+    .order("date", { ascending: false })
+    .eq("teacher_id", teacherId);
 
-  if (authUser.error || !authUser.data.user) {
-    throw authUser.error || new Error("Failed to create auth user");
+  return await handleResponse<Evaluation[]>(res);
+}
+export async function insertEvaluation(data: EvaluationInsert) {
+  const res = await supabase.from("evaluations").insert(data).select().single();
+  return await handleResponse<Evaluation>(res);
+}
+export async function updateEvaluation(
+  evaluationId: string,
+  teacherId: string,
+  data: EvaluationUpdate
+) {
+  const evaluation = await supabase
+    .from("evaluations")
+    .select("teacher_id")
+    .eq("id", evaluationId)
+    .single();
+  if (evaluation.data?.teacher_id !== teacherId) {
+    return null;
   }
 
-  const authId = authUser.data.user.id;
+  const res = await supabase
+    .from("evaluations")
+    .update(data)
+    .eq("id", evaluationId)
+    .select("*")
+    .single();
 
-  // 2) إدخاله في جدول users بنفس الـ id
-  const res = await supabase.from("users").insert({
-    id: authId,
-    username: parent.username,
-    email: parent.email,
-    role: "PARENT",
-  });
-
-  // 3) إذا فشل الإدخال → حذف المستخدم من auth
-  if (res.error) {
-    await supabase.auth.admin.deleteUser(authId);
-    throw res.error;
+  return handleResponse(res);
+}
+export async function deleteEvaluation(
+  evaluationId: string,
+  teacherId: string
+) {
+  const { data: evaluationData, error: evaluationError } = await supabase
+    .from("evaluations")
+    .select("teacher_id")
+    .eq("id", evaluationId)
+    .single();
+  if (evaluationError) {
+    console.log("Error when selecting evaluation");
+    return null;
   }
+  if (evaluationData.teacher_id !== teacherId) {
+    console.log("This teacher does not own this evaluation");
+    return null;
+  }
+  const { error: deleteDbError } = await supabase
+    .from("evaluations")
+    .delete()
+    .eq("id", evaluationId);
 
-  return await handleResponse<Parent>(res);
+  if (deleteDbError) {
+    console.log("Failed to delete evaluation in DB");
+
+    return null;
+  }
+  return {
+    status: true,
+  };
 }
 
 /*

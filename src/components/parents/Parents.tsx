@@ -72,14 +72,7 @@ const ParentActions: React.FC<ParentActionsProps> = ({
   return (
     <div className="flex items-center gap-2">
       {/* no need to edit a parent */}
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={() => onEdit(parent)}
-        className="hover:bg-accent/10 hover:text-accent"
-      >
-        <Edit className="w-4 h-4" />
-      </Button>
+
       <Button
         size="sm"
         variant="ghost"
@@ -160,22 +153,13 @@ const ParentCard: React.FC<ParentCardProps> = ({
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2 pt-2 border-t border-border">
-            {/* no need to edit parent */}
-            <Button
-              size="sm"
-              onClick={() => onEdit(parent)}
-              variant="outline"
-              className="flex-1 gap-2"
-            >
-              <Edit className="w-4 h-4" />
-              تعديل
-            </Button>
+          <div className="flex justify-center  gap-2 pt-2 border-t border-border">
+    
             <Button
               size="sm"
               onClick={() => onDelete(parent)}
               variant="outline"
-              className={`hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30  ${
+              className={`w-full hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30  ${
                 isDeleteing ? "cursor-not-allowed " : ""
               }`}
             >
@@ -219,9 +203,7 @@ const ParentTable: React.FC<ParentTableProps> = ({
               <th className="text-right px-6 py-4 text-foreground font-semibold">
                 البريد الإلكتروني
               </th>
-              <th className="text-right px-6 py-4 text-foreground font-semibold">
-                عدد الطلاب
-              </th>
+
               <th className="text-right px-6 py-4 text-foreground font-semibold">
                 تاريخ التسجيل
               </th>
@@ -259,14 +241,7 @@ const ParentTable: React.FC<ParentTableProps> = ({
                     <span className="text-foreground">{parent?.email}</span>
                   </div>
                 </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-primary" />
-                    <span className="text-foreground">
-                      {/* {parent.students_count || 0} */}
-                    </span>
-                  </div>
-                </td>
+
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-secondary-foreground" />
@@ -377,8 +352,8 @@ export default function ParentsPage({
   };
 
   return (
-    <div className=" ">
-      <div className="w-full mx-auto space-y-6">
+    <div>
+      <div className="w-full  mx-auto space-y-6">
         {/* Header */}
         <Card className="border-border shadow-sm">
           <CardHeader>
@@ -427,7 +402,7 @@ export default function ParentsPage({
               </div>
 
               {/* Filter Dropdown */}
-              <DropdownMenu>
+              {/* <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="gap-2">
                     <Filter className="w-4 h-4" />
@@ -440,13 +415,13 @@ export default function ParentsPage({
                   <DropdownMenuItem>حسب الاسم (أ-ي)</DropdownMenuItem>
                   <DropdownMenuItem>حسب الاسم (ي-أ)</DropdownMenuItem>
                 </DropdownMenuContent>
-              </DropdownMenu>
+              </DropdownMenu> */}
             </div>
           </CardContent>
         </Card>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Card className="border-border shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
@@ -474,24 +449,6 @@ export default function ParentsPage({
                   <p className="text-sm text-muted-foreground">نتائج البحث</p>
                   <p className="text-2xl font-bold text-foreground">
                     {filteredParents.length}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-border shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-secondary/20 rounded-xl">
-                  <User className="w-6 h-6 text-secondary-foreground" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">إجمالي الطلاب</p>
-                  <p className="text-2xl font-bold text-foreground">
-                    {/* {parents.reduce(
-                      (sum, p) => sum + (p.students_count || 0),
-                      0
-                    )} */}
                   </p>
                 </div>
               </div>
@@ -532,7 +489,7 @@ export default function ParentsPage({
         ) : (
           <>
             {/* Desktop Table */}
-            <div className="hidden md:block">
+            <div className="rounded-2xl hidden md:block">
               <ParentTable
                 parents={paginatedParents}
                 onView={handleView}
@@ -543,7 +500,7 @@ export default function ParentsPage({
             </div>
 
             {/* Mobile Cards */}
-            <div className="md:hidden grid grid-cols-1 gap-4">
+            <div className="md:hidden  grid grid-cols-1 gap-4">
               {paginatedParents.map((parent) => (
                 <ParentCard
                   key={parent?.id}

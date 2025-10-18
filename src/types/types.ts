@@ -5,6 +5,15 @@ export type AttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
 
 export type User = Database["public"]["Tables"]["users"]["Row"];
 export type Parent = Database["public"]["Tables"]["users"]["Row"] | null;
+export type Evaluation = Database["public"]["Tables"]["evaluations"]["Row"];
+export type EvaluationInsert = {
+  student_id: string;
+  teacher_id: string;
+  subject: string;
+  score: number;
+  note: string;
+  date: string;
+};
 
 export type AddParentFormData = {
   username: string;
@@ -31,16 +40,6 @@ export interface Attendance {
   created_at: Date;
 }
 
-export interface Evaluation {
-  id: string;
-  student_id: string;
-  teacher_id: string;
-  date: string; // صيغة YYYY-MM-DD
-  subject: string; // الجزء المحفوط
-  score: number;
-  note: string;
-  created_at: Date;
-}
 export interface Notification {
   id: string;
   user_id: string; // any teacher ,admin or parent

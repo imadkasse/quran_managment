@@ -279,7 +279,7 @@ export default function AddParentModal({
           </div>
         </form>
 
-        <DialogFooter className="gap-2">
+        <DialogFooter className="gap-2" dir="ltr">
           <Button
             type="button"
             variant="outline"

@@ -12,6 +12,8 @@ import {
   Menu,
   X,
   UserStar,
+  TrendingUp,
+  CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -56,6 +58,8 @@ const roleConfigs: Record<UserRole, RoleConfig> = {
       { title: "الطلاب", href: "/teacher/students", icon: GraduationCap },
       { title: "الأولياء", href: "/teacher/parents", icon: UserStar },
       { title: "الحضور", href: "/teacher/attendance", icon: UserCheck },
+      { title: "التقدم", href: "/teacher/evaluations", icon: TrendingUp },
+      { title: "الإشتراكات", href: "/teacher/subscriptions", icon: CreditCard },
       { title: "التقارير", href: "/teacher/reports", icon: FileText },
       { title: "الإشعارات", href: "/teacher/notifications", icon: Bell },
     ],
