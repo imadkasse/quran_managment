@@ -51,38 +51,7 @@ type FormData = Database["public"]["Tables"]["evaluations"]["Insert"];
 
 // Mock data
 
-const mockEvaluations: Evaluation[] = [
-  {
-    id: "1",
-    student_id: "d969dc80-d16d-4bb7-ba48-61e95c50f219",
-    teacher_id: "bcc9c2c1-524b-432b-b0e0-3f74d6b9c11f",
-    subject: "حفظ سورة البقرة من الآية 1 إلى 20",
-    score: 18,
-    note: "تجويد جيد جدًا مع بعض الأخطاء البسيطة",
-    date: "2024-10-15",
-    created_at: "2024-10-15T10:00:00Z",
-  },
-  {
-    id: "2",
-    student_id: "2",
-    teacher_id: "t1",
-    subject: "مراجعة سورة الكهف (النصف الأول)",
-    score: 16,
-    note: "تحتاج إلى تحسين الربط بين الآيات",
-    date: "2024-10-14",
-    created_at: "2024-10-14T09:30:00Z",
-  },
-  {
-    id: "3",
-    student_id: "3",
-    teacher_id: "t1",
-    subject: "تجويد (أحكام النون الساكنة والتنوين)",
-    score: 15,
-    note: "مستوى متوسط، يلزم تدريب إضافي",
-    date: "2024-10-13",
-    created_at: "2024-10-13T11:00:00Z",
-  },
-];
+
 interface Props {
   evaluationFetcher: Evaluation[] | null;
   studentsFetchers: Student[];

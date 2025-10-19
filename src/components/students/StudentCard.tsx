@@ -15,6 +15,8 @@ import {
   Users,
   Edit,
   Trash,
+  BookOpen,
+  Award,
 } from "lucide-react";
 import { Student } from "@/types/types";
 

@@ -3,13 +3,14 @@ import { Database } from "@/types/supabase.types";
 import { PostgrestError } from "@supabase/supabase-js";
 
 type Student = Database["public"]["Tables"]["students"]["Row"];
+type StudentInsert = Database["public"]["Tables"]["students"]["Insert"];
+type StudentUpdate = Database["public"]["Tables"]["students"]["Update"];
+
 type Parent = Database["public"]["Tables"]["users"]["Row"];
 type Evaluation = Database["public"]["Tables"]["evaluations"]["Row"];
 type EvaluationInsert = Database["public"]["Tables"]["evaluations"]["Insert"];
 type EvaluationUpdate = Database["public"]["Tables"]["evaluations"]["Update"];
 
-type StudentInsert = Database["public"]["Tables"]["students"]["Insert"];
-type StudentUpdate = Database["public"]["Tables"]["students"]["Update"];
 type ParentInStudent = {
   username: string;
   email: string;
@@ -43,6 +44,18 @@ export async function getAllMyStudents(
 
   return (await handleResponse<StudentWithParent[]>(res)) ?? [];
 }
+
+export async function insertStudent(payload: CreateStudentPayload) {
+  const res = await supabase
+    .from("students")
+    .insert(payload)
+    .select(
+      "id, full_name, age, level, teacher_id, parent_id, created_at ,parent:students_parent_id_fkey(username, email) "
+    )
+    .single();
+  return await handleResponse<StudentWithParent>(res);
+}
+
 // parents
 // in after time add filed teacher_id in users schema and get olny the parent with the same teacher_id
 export async function getAllMyParent(): Promise<Parent[]> {
@@ -135,12 +148,7 @@ export async function getStudentById(
   return handleResponse<Student | null>(res);
 }
 
-export async function createStudent(
-  payload: CreateStudentPayload
-): Promise<Student> {
-  const res = await supabase.from("students").insert(payload).select().single();
-  return handleResponse<Student>(res) as Promise<Student>;
-}
+
 
 export async function updateStudent(
   studentId: string,
