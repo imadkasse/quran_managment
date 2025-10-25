@@ -22,7 +22,12 @@ import { Parent, Student } from "@/types/types";
 import { useUser } from "@/store/userStore";
 import { StudentCard } from "../students/StudentCard";
 import showToast from "@/utils/showToast";
-import { insertStudent, StudentWithParent } from "@/services/teacher";
+import {
+  deleteStudent,
+  insertStudent,
+  StudentWithParent,
+  updateStudent,
+} from "@/services/teacher";
 import { Database } from "@/types/supabase.types";
 import { Dialog } from "@radix-ui/react-dialog";
 import {
@@ -53,6 +58,7 @@ import {
 } from "../ui/alert-dialog";
 
 type FormData = Database["public"]["Tables"]["students"]["Insert"];
+type FormDataUpdate = Database["public"]["Tables"]["students"]["Update"];
 
 interface Props {
   studentsFetcher: StudentWithParent[];
@@ -285,6 +291,16 @@ export const StudentsTable = ({ studentsFetcher, parentsFetcher }: Props) => {
     teacher_id: "",
   });
   const [formErrors, setFormErrors] = useState<Partial<FormData>>({});
+  const [formDataUpdate, setFormDataUpdate] = useState<FormDataUpdate>({
+    full_name: "",
+    age: 0,
+    level: "",
+    parent_id: "",
+    teacher_id: "",
+  });
+  const [formUpdateErrors, setFormUpdateErrors] = useState<
+    Partial<FormDataUpdate>
+  >({});
 
   const [isEditeingLoading, setIsEditeingLoading] = useState(false);
   const [isDeleteingLoading, setIsDeleteingLoading] = useState(false);
@@ -297,6 +313,13 @@ export const StudentsTable = ({ studentsFetcher, parentsFetcher }: Props) => {
     // Clear error when user starts typing
     if (formErrors[field]) {
       setFormErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
+  const handleInputChangeOnEdit = (field: keyof FormData, value: string) => {
+    setFormDataUpdate((prev) => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (formErrors[field]) {
+      setFormUpdateErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
   const validateForm = (): boolean => {
@@ -316,6 +339,29 @@ export const StudentsTable = ({ studentsFetcher, parentsFetcher }: Props) => {
     }
 
     setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+  const validateFormOnUpdate = (): boolean => {
+    const errors: Partial<FormDataUpdate> = {};
+
+    if (!formDataUpdate.full_name?.trim()) {
+      errors.full_name = "الاسم الكامل مطلوب";
+    }
+    if (
+      !formDataUpdate.age ||
+      formDataUpdate.age < 1 ||
+      formDataUpdate.age > 100
+    ) {
+      // errors.age = "العمر يجب أن يكون بين 1 و 100";
+    }
+    if (!formDataUpdate.level) {
+      errors.level = "المستوى الدراسي مطلوب";
+    }
+    if (!formDataUpdate.parent_id) {
+      errors.parent_id = "ولي الأمر مطلوب";
+    }
+
+    setFormUpdateErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
@@ -368,13 +414,48 @@ export const StudentsTable = ({ studentsFetcher, parentsFetcher }: Props) => {
     });
     setFormErrors({});
   };
-  const handleOpenDialog = () => {
+  const handleOpenDialog = (student: Student) => {
     setIsDialogOpen(true);
+    setSelectedStudent(student);
+    setFormDataUpdate({
+      id: student.id,
+      full_name: student.full_name,
+      age: student.age,
+      level: student.level,
+      teacher_id: student.teacher_id,
+      parent_id: student.parent_id,
+    });
   };
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     // resetForm();
     setSelectedStudent(null);
+  };
+
+  const handleEdit = async () => {
+    setIsEditeingLoading(true);
+    if (!validateFormOnUpdate()) {
+      return;
+    }
+    try {
+      const updatedStudent = await updateStudent(
+        formDataUpdate.id as string,
+        formDataUpdate as Student
+      );
+      if (!updatedStudent) {
+        showToast("error", "فشل أثناء تحديث بيانات الطالب");
+        return;
+      }
+      setStudents((prev) =>
+        prev.map((s) => (s.id === updatedStudent.id ? updatedStudent : s))
+      );
+    } catch (error: any) {
+      console.log(error);
+      showToast("error", error.message || "Oops An Error");
+    } finally {
+      setIsEditeingLoading(false);
+    }
+    handleCloseDialog();
   };
   const handleDeleteClick = (id: string) => {
     setDeleteId(id);
@@ -384,15 +465,15 @@ export const StudentsTable = ({ studentsFetcher, parentsFetcher }: Props) => {
   const handleDeleteConfirm = async () => {
     setIsDeleteingLoading(true);
     try {
-      // if (deleteId) {
-      //   const isDeleted = await deleteEvaluation(deleteId, teacher_id);
-      //   if (!isDeleted?.status) {
-      //     showToast("error", "خطأ أثناء حذف التقدم");
-      //     return;
-      //   }
-      //   setEvaluations((prev) => prev.filter((ev) => ev.id !== deleteId));
-      //   showToast("success", "تم حذف التقدم بنجاح");
-      // }
+      if (deleteId) {
+        const isDeleted = await deleteStudent(deleteId);
+        if (!isDeleted) {
+          showToast("error", "خطأ أثناء حذف الطالب");
+          return;
+        }
+        setStudents((prev) => prev.filter((s) => s.id !== deleteId));
+        showToast("success", "تم حذف الطالب بنجاح");
+      }
     } catch (error: any) {
       console.log(error);
       showToast("error", error.message || "Oops An Error");
@@ -479,7 +560,7 @@ export const StudentsTable = ({ studentsFetcher, parentsFetcher }: Props) => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleOpenDialog()}
+                  onClick={() => handleOpenDialog(student)}
                   className="h-8 w-8 p-0 hover:bg-accent cursor-pointer"
                 >
                   <Edit className="h-4 w-4" />
@@ -607,8 +688,7 @@ export const StudentsTable = ({ studentsFetcher, parentsFetcher }: Props) => {
                         variant="ghost"
                         size="sm"
                         onClick={() => {
-                          setSelectedStudent(student);
-                          handleOpenDialog();
+                          handleOpenDialog(student);
                         }}
                         className="h-8 w-8 p-0 hover:bg-accent cursor-pointer"
                       >
@@ -1048,22 +1128,19 @@ export const StudentsTable = ({ studentsFetcher, parentsFetcher }: Props) => {
               </Label>
               <Input
                 id="full_name"
-                value={selectedStudent?.full_name}
-                onChange={(e) => handleInputChange("full_name", e.target.value)}
+                value={formDataUpdate?.full_name}
+                onChange={(e) =>
+                  handleInputChangeOnEdit("full_name", e.target.value)
+                }
                 placeholder="أدخل الاسم الكامل للطالب"
                 className={`${
-                  formErrors.full_name ? "border-destructive" : ""
+                  formUpdateErrors.full_name ? "border-destructive" : ""
                 } bg-background border-border text-foreground placeholder:text-muted-foreground`}
                 disabled={isEditeingLoading}
               />
-              {formErrors.full_name && (
+              {formUpdateErrors.full_name && (
                 <p className="text-sm text-destructive">
-                  {formErrors.full_name}
-                </p>
-              )}
-              {formErrors.full_name && (
-                <p className="text-sm text-destructive">
-                  {formErrors.full_name}
+                  {formUpdateErrors.full_name}
                 </p>
               )}
             </div>
@@ -1086,26 +1163,28 @@ export const StudentsTable = ({ studentsFetcher, parentsFetcher }: Props) => {
               <Input
                 id="age"
                 type="number"
-                value={selectedStudent?.age}
-                onChange={(e) => handleInputChange("age", e.target.value)}
+                value={formDataUpdate?.age}
+                onChange={(e) => handleInputChangeOnEdit("age", e.target.value)}
                 placeholder="أدخل عمر الطالب"
                 min="1"
                 max="100"
                 className={`${
-                  formErrors.age ? "border-destructive" : ""
+                  formUpdateErrors.age ? "border-destructive" : ""
                 } bg-background border-border text-foreground placeholder:text-muted-foreground`}
                 disabled={isEditeingLoading}
               />
-              {formErrors.age && (
-                <p className="text-sm text-destructive">{formErrors.age}</p>
+              {formUpdateErrors.age && (
+                <p className="text-sm text-destructive">
+                  {formUpdateErrors.age}
+                </p>
               )}
             </div>
 
             {/* Level Field */}
 
             <Input
-              value={selectedStudent?.level}
-              onChange={(e) => handleInputChange("level", e.target.value)}
+              value={formDataUpdate?.level}
+              onChange={(e) => handleInputChangeOnEdit("level", e.target.value)}
               placeholder="أدخل المستوى يدوياً"
               disabled={isEditeingLoading}
             />
@@ -1126,8 +1205,10 @@ export const StudentsTable = ({ studentsFetcher, parentsFetcher }: Props) => {
                 <span className="text-destructive">*</span>
               </Label>
               <Select
-                value={selectedStudent?.parent_id}
-                onValueChange={(value) => handleInputChange("parent_id", value)}
+                value={formDataUpdate?.parent_id}
+                onValueChange={(value) =>
+                  handleInputChangeOnEdit("parent_id", value)
+                }
                 disabled={isEditeingLoading}
               >
                 <SelectTrigger
@@ -1149,9 +1230,9 @@ export const StudentsTable = ({ studentsFetcher, parentsFetcher }: Props) => {
                   ))}
                 </SelectContent>
               </Select>
-              {formErrors.parent_id && (
+              {formUpdateErrors.parent_id && (
                 <p className="text-sm text-destructive">
-                  {formErrors.parent_id}
+                  {formUpdateErrors.parent_id}
                 </p>
               )}
             </div>
@@ -1164,7 +1245,7 @@ export const StudentsTable = ({ studentsFetcher, parentsFetcher }: Props) => {
 
             <Button
               type="button"
-              onClick={handleSubmit}
+              onClick={handleEdit}
               className={`bg-primary hover:bg-primary/90 ${
                 isEditeingLoading ? "bg-primary/90 cursor-not-allowed" : ""
               }`}

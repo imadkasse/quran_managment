@@ -66,6 +66,7 @@
   /* ألوان مساعدة */
   --muted: oklch(0.95 0.02 120); /* رمادي فاتح مع لمسة خضراء */
   --muted-foreground: oklch(0.55 0.04 140);
+ 
 
   --accent: oklch(0.75 0.12 150); /* أخضر فاتح */
   --accent-foreground: oklch(0.1 0.02 140);
@@ -146,6 +147,7 @@
 }
 html {
   transition: background 0.3s, color 0.3s;
+  scroll-behavior: smooth;
 }
 
 ::-webkit-scrollbar {

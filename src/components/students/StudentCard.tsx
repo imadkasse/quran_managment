@@ -31,20 +31,8 @@ interface StudentCardProps {
 export const StudentCard: React.FC<StudentCardProps> = ({
   student,
   open,
-  onEdit,
-  onDelete,
   onClose,
 }) => {
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  const handleDelete = () => {
-    onDelete();
-    setShowDeleteConfirm(false);
-  };
-  const handleEdit = () => {
-    onEdit();
-  };
-
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0  gap-0 bg-card border-border">
@@ -207,54 +195,6 @@ export const StudentCard: React.FC<StudentCardProps> = ({
               </div>
             </div> */}
           </CardContent>
-
-          {/* Footer Actions */}
-          <CardFooter className="flex flex-col sm:flex-row gap-3 p-6 border-t border-border bg-muted/10">
-            {!showDeleteConfirm ? (
-              <>
-                <Button
-                  onClick={onEdit}
-                  className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground gap-2"
-                >
-                  <Edit className="w-4 h-4" />
-                  تعديل البيانات
-                </Button>
-                <Button
-                  onClick={() => setShowDeleteConfirm(true)}
-                  variant="destructive"
-                  className="flex-1 gap-2"
-                >
-                  <Trash className="w-4 h-4" />
-                  حذف الطالب
-                </Button>
-              </>
-            ) : (
-              <div className="w-full space-y-3">
-                <div className="flex items-center gap-2 p-3 bg-destructive/10 rounded-lg border border-destructive/20">
-                  <Trash className="w-5 h-5 text-destructive" />
-                  <p className="text-sm font-medium text-destructive">
-                    هل أنت متأكد من حذف هذا الطالب؟
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <Button
-                    onClick={handleDelete}
-                    variant="destructive"
-                    className="flex-1"
-                  >
-                    تأكيد الحذف
-                  </Button>
-                  <Button
-                    onClick={() => setShowDeleteConfirm(false)}
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    إلغاء
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardFooter>
         </Card>
       </DialogContent>
     </Dialog>

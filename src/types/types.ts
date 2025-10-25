@@ -30,16 +30,7 @@ export type Student = Database["public"]["Tables"]["students"]["Row"] & {
   parent: ParentInStudent | null;
 };
 
-export interface Attendance {
-  id: string;
-  student_id: string;
-  teacher_id: string;
-  date: string; // صيغة YYYY-MM-DD
-  status: AttendanceStatus;
-  notes: string;
-  created_at: Date;
-}
-
+export type Attendance = Database["public"]["Tables"]["attendance"]["Row"]
 export interface Notification {
   id: string;
   user_id: string; // any teacher ,admin or parent
