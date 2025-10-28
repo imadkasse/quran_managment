@@ -4,7 +4,7 @@ import { supabaseAdmin } from "@/supabase/server";
 export async function POST(request: Request) {
   try {
     const { username, email, password, teacher_id } = await request.json();
-    console.log("request", request);
+    
     if (!password || !email) {
       return NextResponse.json(
         { error: "password & email are required" },
@@ -51,8 +51,9 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true, parent: insertRes.data });
-  } catch (error: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error("ERROR:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

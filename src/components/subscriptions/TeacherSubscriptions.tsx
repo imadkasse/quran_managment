@@ -12,6 +12,10 @@ import {
   FileText,
   User,
   Filter,
+  Check,
+  Clock,
+  RotateCcw,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +45,10 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Database } from "@/types/supabase.types";
+import { Student } from "@/types/types";
+import showToast from "@/utils/showToast";
+import { insertSubscription } from "@/services/teacher";
 
 type Subscription = {
   id: string;
@@ -54,113 +62,49 @@ type Subscription = {
   created_at: string;
 };
 
-type Student = {
-  id: string;
-  name: string;
-};
+type SubscriptionStatus =
+  Database["public"]["Tables"]["subscriptions"]["Row"]["status"];
+type SubscriptionInsert =
+  Database["public"]["Tables"]["subscriptions"]["Insert"];
+interface Props {
+  studentsFetcher: Student[];
+  subscriptionsFetcher: Subscription[];
+}
+const teacher_id = "bcc9c2c1-524b-432b-b0e0-3f74d6b9c11f"; // just for testing
 
-// Dummy data
-const dummyStudents: Student[] = [
-  { id: "std-1", name: "Ahmed Hassan" },
-  { id: "std-2", name: "Fatima Ali" },
-  { id: "std-3", name: "Mohamed Ibrahim" },
-  { id: "std-4", name: "Aisha Omar" },
-  { id: "std-5", name: "Youssef Mahmoud" },
-  { id: "std-6", name: "Mariam Khalil" },
-];
-
-const dummySubscriptions: Subscription[] = [
-  {
-    id: "sub-1",
-    student_id: "std-1",
-    created_by: "teacher-1",
-    status: "ACTIVE",
-    amount: 5000,
-    start_date: "2025-01-01",
-    end_date: "2025-06-30",
-    note: "Full semester subscription",
-    created_at: "2025-01-01T10:00:00Z",
-  },
-  {
-    id: "sub-2",
-    student_id: "std-2",
-    created_by: "teacher-1",
-    status: "ACTIVE",
-    amount: 5000,
-    start_date: "2025-02-01",
-    end_date: "2025-07-31",
-    note: null,
-    created_at: "2025-02-01T10:00:00Z",
-  },
-  {
-    id: "sub-3",
-    student_id: "std-3",
-    created_by: "teacher-1",
-    status: "EXPIRED",
-    amount: 4500,
-    start_date: "2024-09-01",
-    end_date: "2024-12-31",
-    note: "Previous semester",
-    created_at: "2024-09-01T10:00:00Z",
-  },
-  {
-    id: "sub-4",
-    student_id: "std-4",
-    created_by: "teacher-1",
-    status: "PENDING",
-    amount: 5500,
-    start_date: "2025-03-01",
-    end_date: "2025-08-31",
-    note: "Waiting for payment confirmation",
-    created_at: "2025-02-28T10:00:00Z",
-  },
-  {
-    id: "sub-5",
-    student_id: "std-5",
-    created_by: "teacher-1",
-    status: "ACTIVE",
-    amount: 5000,
-    start_date: "2025-01-15",
-    end_date: "2025-07-15",
-    note: null,
-    created_at: "2025-01-15T10:00:00Z",
-  },
-];
-
-export default function TeacherSubscriptions() {
+export default function TeacherSubscriptions({
+  studentsFetcher,
+  subscriptionsFetcher,
+}: Props) {
   const [subscriptions, setSubscriptions] =
-    useState<Subscription[]>(dummySubscriptions);
+    useState<Subscription[]>(subscriptionsFetcher);
+  const [students, setStudents] = useState<Student[]>(studentsFetcher);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [viewSubscription, setViewSubscription] = useState<Subscription | null>(
     null
   );
+  // loadings
+  const [isLoadingCreating, setIsLoadingCreating] = useState<boolean>(false);
 
   // Form state
-  const [formData, setFormData] = useState({
-    student_id: "",
-    status: "ACTIVE",
-    amount: "",
-    start_date: new Date().toISOString().split("T")[0],
-    end_date: "",
-    note: "",
-  });
+  const [formData, setFormData] = useState<SubscriptionInsert>();
 
   // Get student name by ID
   const getStudentName = (studentId: string) => {
     return (
-      dummyStudents.find((s) => s.id === studentId)?.name || "Unknown Student"
+      students.find((s) => s.id === studentId)?.full_name || "Unknown Student"
     );
   };
 
   // Calculate summary stats
   const stats = useMemo(() => {
-    const active = subscriptions.filter((s) => s.status === "ACTIVE").length;
+    const active = subscriptions.filter((s) => s.status === "PAID").length;
     const expired = subscriptions.filter((s) => s.status === "EXPIRED").length;
     const pending = subscriptions.filter((s) => s.status === "PENDING").length;
     const totalRevenue = subscriptions
-      .filter((s) => s.status === "ACTIVE")
+      .filter((s) => s.status === "PAID")
       .reduce((sum, s) => sum + s.amount, 0);
 
     return { active, expired, pending, totalRevenue };
@@ -178,32 +122,30 @@ export default function TeacherSubscriptions() {
   }, [subscriptions, searchTerm, statusFilter]);
 
   // Handle form submit
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newSubscription: Subscription = {
-      id: `sub-${Date.now()}`,
-      student_id: formData.student_id,
-      created_by: "teacher-1",
-      status: formData.status,
-      amount: parseFloat(formData.amount),
-      start_date: formData.start_date,
-      end_date: formData.end_date,
-      note: formData.note || null,
-      created_at: new Date().toISOString(),
-    };
+  const handleSubmit = async () => {
+    setIsLoadingCreating(true);
 
-    setSubscriptions([newSubscription, ...subscriptions]);
-    setIsDialogOpen(false);
-
-    // Reset form
-    setFormData({
-      student_id: "",
-      status: "ACTIVE",
-      amount: "",
-      start_date: new Date().toISOString().split("T")[0],
-      end_date: "",
-      note: "",
-    });
+    try {
+      console.log("formData :", formData);
+      const newSubs = await insertSubscription(formData as SubscriptionInsert);
+      setSubscriptions([...subscriptions, newSubs as Subscription]);
+      showToast("success", "تم إنشاء الإشتراك بنجاح");
+      // Reset form
+      setFormData({
+        student_id: "",
+        status: "",
+        amount: 0,
+        start_date: new Date().toISOString().split("T")[0],
+        end_date: "",
+        note: "",
+        created_by: "",
+      });
+    } catch (error: any) {
+      console.log(error);
+      showToast("error", error.message || "Oops An Error");
+    } finally {
+      setIsLoadingCreating(false);
+    }
   };
 
   // Handle renew
@@ -212,15 +154,16 @@ export default function TeacherSubscriptions() {
     const newStartDate = new Date(endDate);
     newStartDate.setDate(newStartDate.getDate() + 1);
     const newEndDate = new Date(newStartDate);
-    newEndDate.setMonth(newEndDate.getMonth() + 6);
+    newEndDate.setMonth(newEndDate.getMonth() + 1);
 
     setFormData({
       student_id: sub.student_id,
-      status: "ACTIVE",
-      amount: sub.amount.toString(),
+      status: "PAID",
+      amount: sub.amount,
       start_date: newStartDate.toISOString().split("T")[0],
       end_date: newEndDate.toISOString().split("T")[0],
       note: "Renewal",
+      created_by: sub.created_by,
     });
     setIsDialogOpen(true);
   };
@@ -237,7 +180,7 @@ export default function TeacherSubscriptions() {
   // Get status badge variant
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { className: string }> = {
-      ACTIVE: { className: "bg-primary/10 text-primary hover:bg-primary/20" },
+      PAID: { className: "bg-primary/10 text-primary hover:bg-primary/20" },
       EXPIRED: {
         className: "bg-destructive/10 text-destructive hover:bg-destructive/20",
       },
@@ -248,8 +191,12 @@ export default function TeacherSubscriptions() {
     };
 
     return (
-      <Badge variant="outline" className={variants[status]?.className || ""}>
-        {status}
+      <Badge className={variants[`${status}`].className}>
+        {status === "PAID"
+          ? "نشط"
+          : status === "PENDING"
+          ? "قيد الإنتظار"
+          : "منتهي"}
       </Badge>
     );
   };
@@ -275,143 +222,190 @@ export default function TeacherSubscriptions() {
     <div className=" bg-background p-4 md:p-8">
       <div className="w-full space-y-8">
         {/* Header - الرأس */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <CreditCard className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">الاشتراكات</h1>
-              <p className="text-sm text-muted-foreground">
-                إدارة اشتراكات الطلاب
-              </p>
-            </div>
-          </div>
-
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                اشتراك جديد
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>إنشاء اشتراك جديد</DialogTitle>
-                <DialogDescription>إضافة اشتراك جديد لطالب</DialogDescription>
-              </DialogHeader>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="student">الطالب</Label>
-                  <Select
-                    value={formData.student_id}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, student_id: value })
-                    }
-                    required
-                  >
-                    <SelectTrigger id="student">
-                      <SelectValue placeholder="اختر طالباً" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {dummyStudents.map((student) => (
-                        <SelectItem key={student.id} value={student.id}>
-                          {student.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+        <Card className="shadow-xl border-2">
+          <CardContent>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex  flex-1 items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <CreditCard className="h-6 w-6 text-primary" />
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="status">الحالة</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, status: value })
-                    }
-                  >
-                    <SelectTrigger id="status">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ACTIVE">نشط</SelectItem>
-                      <SelectItem value="PENDING">معلَّق</SelectItem>
-                      <SelectItem value="EXPIRED">منتهي الصلاحية</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div>
+                  <h1 className="text-3xl font-bold text-foreground">
+                    الاشتراكات
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    إدارة اشتراكات الطلاب
+                  </p>
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="amount">المبلغ (د.ج)</Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    placeholder="5000"
-                    value={formData.amount}
-                    onChange={(e) =>
-                      setFormData({ ...formData, amount: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="start_date">تاريخ البدء</Label>
-                    <Input
-                      id="start_date"
-                      type="date"
-                      value={formData.start_date}
-                      onChange={(e) =>
-                        setFormData({ ...formData, start_date: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="end_date">تاريخ الانتهاء</Label>
-                    <Input
-                      id="end_date"
-                      type="date"
-                      value={formData.end_date}
-                      onChange={(e) =>
-                        setFormData({ ...formData, end_date: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="note">ملاحظة (اختياري)</Label>
-                  <Textarea
-                    id="note"
-                    placeholder="أضف أي ملاحظات إضافية..."
-                    value={formData.note}
-                    onChange={(e) =>
-                      setFormData({ ...formData, note: e.target.value })
-                    }
-                    rows={3}
-                  />
-                </div>
-
-                <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsDialogOpen(false)}
-                  >
-                    إلغاء
+                <div className="flex-1  flex justify-end group">
+                  <Button variant="outline">
+                    <>
+                      <RotateCcw className="h-4 w-4 mr-2 group-hover:-rotate-360 transition duration-500" />
+                      تهيئة الإشتراك الشهري
+                    </>
                   </Button>
-                  <Button type="submit">إنشاء الاشتراك</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
+                </div>
+              </div>
+
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    اشتراك جديد
+                  </Button>
+                </DialogTrigger>
+
+                <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>إنشاء اشتراك جديد</DialogTitle>
+                    <DialogDescription>
+                      إضافة اشتراك جديد لطالب
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <form className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="student">الطالب</Label>
+                      <Select
+                        value={formData?.student_id}
+                        onValueChange={(value) =>
+                          setFormData({
+                            ...(formData as SubscriptionInsert),
+                            student_id: value as string,
+                            created_by: teacher_id,
+                          })
+                        }
+                        required
+                      >
+                        <SelectTrigger id="student">
+                          <SelectValue placeholder="اختر طالباً" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {students.map((student) => (
+                            <SelectItem key={student.id} value={student.id}>
+                              {student.full_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="status">الحالة</Label>
+                      <Select
+                        value={formData?.status}
+                        onValueChange={(value) =>
+                          setFormData({
+                            ...(formData as SubscriptionInsert),
+                            status: value,
+                          })
+                        }
+                      >
+                        <SelectTrigger id="status">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="PAID">نشط</SelectItem>
+                          <SelectItem value="PENDING">معلَّق</SelectItem>
+                          <SelectItem value="EXPIRED">
+                            منتهي الصلاحية
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="amount">المبلغ (د.ج)</Label>
+                      <Input
+                        id="amount"
+                        type="number"
+                        placeholder="5000"
+                        value={formData?.amount}
+                        onChange={(e) =>
+                          setFormData({
+                            ...(formData as SubscriptionInsert),
+                            amount: Number(e.target.value),
+                          })
+                        }
+                        required
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="start_date">تاريخ البدء</Label>
+                        <Input
+                          id="start_date"
+                          type="date"
+                          value={formData?.start_date}
+                          onChange={(e) =>
+                            setFormData({
+                              ...(formData as SubscriptionInsert),
+                              start_date: e.target.value,
+                            })
+                          }
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="end_date">تاريخ الانتهاء</Label>
+                        <Input
+                          id="end_date"
+                          type="date"
+                          value={formData?.end_date}
+                          onChange={(e) =>
+                            setFormData({
+                              ...(formData as SubscriptionInsert),
+                              end_date: e.target.value,
+                            })
+                          }
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="note">ملاحظة (اختياري)</Label>
+                      <Textarea
+                        id="note"
+                        placeholder="أضف أي ملاحظات إضافية..."
+                        value={formData?.note as string}
+                        onChange={(e) =>
+                          setFormData({
+                            ...(formData as SubscriptionInsert),
+                            note: e.target.value,
+                          })
+                        }
+                        rows={3}
+                      />
+                    </div>
+
+                    <DialogFooter>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsDialogOpen(false)}
+                      >
+                        إلغاء
+                      </Button>
+                      <Button
+                        onClick={handleSubmit}
+                        disabled={isLoadingCreating}
+                      >
+                        {isLoadingCreating ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          "إنشاء إشتراك"
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Summary Cards - بطاقات الملخص */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -495,7 +489,7 @@ export default function TeacherSubscriptions() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">جميع الحالات</SelectItem>
-                  <SelectItem value="ACTIVE">نشط</SelectItem>
+                  <SelectItem value="PAID">نشط</SelectItem>
                   <SelectItem value="EXPIRED">منتهي الصلاحية</SelectItem>
                   <SelectItem value="PENDING">معلَّق</SelectItem>
                 </SelectContent>
@@ -562,7 +556,7 @@ export default function TeacherSubscriptions() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {sub.status !== "ACTIVE" && (
+                          {sub.status !== "PAID" && (
                             <Button
                               size="sm"
                               variant="ghost"
@@ -571,7 +565,7 @@ export default function TeacherSubscriptions() {
                               <RefreshCw className="h-4 w-4" />
                             </Button>
                           )}
-                          {sub.status === "ACTIVE" && (
+                          {sub.status === "PAID" && (
                             <Button
                               size="sm"
                               variant="ghost"
@@ -640,7 +634,7 @@ export default function TeacherSubscriptions() {
                         <Eye className="h-4 w-4 mr-1" />
                         عرض
                       </Button>
-                      {sub.status !== "ACTIVE" && (
+                      {sub.status !== "PAID" && (
                         <Button
                           size="sm"
                           variant="outline"
@@ -651,7 +645,7 @@ export default function TeacherSubscriptions() {
                           تجديد
                         </Button>
                       )}
-                      {sub.status === "ACTIVE" && (
+                      {sub.status === "PAID" && (
                         <Button
                           size="sm"
                           variant="outline"

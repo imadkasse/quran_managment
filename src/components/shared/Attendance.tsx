@@ -64,7 +64,7 @@ type AttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
 // Mock Data
 const user = {
   role: "TEACHER", // غير إلى "PARENT" لاختبار واجهة ولي الأمر
-  user_id: "t1",
+  user_id: "1f2d6c42-c50e-4a26-bdd5-9b60ed566081", // parent_id for testing
 };
 const teacher_id = "bcc9c2c1-524b-432b-b0e0-3f74d6b9c11f"; // another time get this from session
 
@@ -260,7 +260,6 @@ const TeacherTableRow: React.FC<{
   const currentStatus = STATUS_OPTIONS.find(
     (opt) => opt.value === (attendance?.status || "ABSENT")
   )!;
-  const StatusIcon = currentStatus.Icon;
   const handleUpdateAttendanceStatus = async (
     status: AttendanceStatus,
     attendanceId: string
@@ -351,6 +350,8 @@ const TeacherTableRow: React.FC<{
           </SelectContent>
         </Select>
       </TableCell>
+      <TableCell>{attendance?.date}</TableCell>
+
       <TableCell>{student.level}</TableCell>
       <TableCell>{student.age}</TableCell>
       <TableCell className="font-medium">{student.full_name}</TableCell>
@@ -383,6 +384,9 @@ const StudentAttendanceCard: React.FC<{
               </Badge>
               <Badge variant="outline" className="font-normal">
                 {student.age} سنوات
+              </Badge>
+              <Badge variant="outline" className="font-normal">
+                {initialAttendance?.date} التاريخ
               </Badge>
             </div>
           </div>
@@ -558,7 +562,12 @@ const AttendancePage = ({ attendanceFetcher, studentsFetcher }: Props) => {
         `${configTheDay.status ? "success" : "info"}`,
         configTheDay.msg
       );
-
+      if (configTheDay.status) {
+        setAttendances(
+          configTheDay.attendnaces ? configTheDay.attendnaces : []
+        );
+        return;
+      }
     } catch (error: any) {
       console.log(error);
       showToast("error", error.message || "Oops An Error ");
@@ -704,7 +713,7 @@ const AttendancePage = ({ attendanceFetcher, studentsFetcher }: Props) => {
                     key={student.id}
                     student={student}
                     initialAttendance={attendances.find(
-                      (a) => a.id === student.id && a.date === TODAY_DATE
+                      (a) => a.student_id === student.id && a.date === TODAY_DATE
                     )}
                   />
                 ))}
@@ -719,6 +728,7 @@ const AttendancePage = ({ attendanceFetcher, studentsFetcher }: Props) => {
                     <TableRow>
                       <TableHead>الإجراءات</TableHead>
                       <TableHead>الحالة</TableHead>
+                      <TableHead>التاريخ</TableHead>
                       <TableHead>المستوى</TableHead>
                       <TableHead>العمر</TableHead>
                       <TableHead>اسم الطالب</TableHead>

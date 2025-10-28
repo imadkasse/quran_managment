@@ -30,7 +30,10 @@ export type Student = Database["public"]["Tables"]["students"]["Row"] & {
   parent: ParentInStudent | null;
 };
 
-export type Attendance = Database["public"]["Tables"]["attendance"]["Row"]
+export type Attendance = Database["public"]["Tables"]["attendance"]["Row"];
+
+export type Subscription = Database["public"]["Tables"]["subscriptions"]["Row"];
+
 export interface Notification {
   id: string;
   user_id: string; // any teacher ,admin or parent
@@ -48,17 +51,6 @@ export interface Report {
   attendance_summary: {};
   total_memorization: number;
   extra_data: {};
-  note: string;
-  created_at: Date;
-}
-export interface Subscription {
-  id: string;
-  student_id: string;
-  teacher_id: string;
-  amount: number;
-  start_data: Date;
-  end_data: Date;
-  status: string;
   note: string;
   created_at: Date;
 }

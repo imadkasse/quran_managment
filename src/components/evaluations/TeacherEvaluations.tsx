@@ -1,5 +1,5 @@
 "use client";
-import React, {  useState } from "react";
+import React, { useState } from "react";
 import {
   TrendingUp,
   Plus,
@@ -50,7 +50,6 @@ import {
 type FormData = Database["public"]["Tables"]["evaluations"]["Insert"];
 
 // Mock data
-
 
 interface Props {
   evaluationFetcher: Evaluation[] | null;
@@ -238,23 +237,27 @@ export default function TeacherEvaluations({
     <div className=" bg-background p-4 md:p-8">
       <div className="w-full  space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <TrendingUp className="h-6 w-6 text-primary" />
+        <Card className="shadow-xl border-2">
+          <CardContent>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <TrendingUp className="h-6 w-6 text-primary" />
+                </div>
+                <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                  التقييمات
+                </h1>
+              </div>
+              <Button
+                onClick={() => handleOpenDialog("create")}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                تقييم جديد
+              </Button>
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-              التقييمات
-            </h1>
-          </div>
-          <Button
-            onClick={() => handleOpenDialog("create")}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            تقييم جديد
-          </Button>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

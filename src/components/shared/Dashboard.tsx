@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -35,6 +35,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import { useUser } from "@/store/userStore";
 
 type UserRole = "ADMIN" | "TEACHER" | "PARENT";
 
@@ -85,6 +86,7 @@ const Dashboard: React.FC = () => {
     role: "TEACHER", // يمكن أن يكون "ADMIN" أو "TEACHER" أو "PARENT"
     //... باقي البيانات أعملها لاحقا
   };
+  const { user: userData } = useUser();
   // ألوان النظام
   const colors = {
     primary: "hsl(145 70% 45%)", // --chart-1
@@ -565,6 +567,9 @@ const Dashboard: React.FC = () => {
         return "لوحة التحكم";
     }
   };
+  useEffect(() => {
+    console.log(userData)
+  }, [userData]);
 
   return (
     <div className="h-[95vh]  p-4 md:p-10">
@@ -652,8 +657,6 @@ const Dashboard: React.FC = () => {
             </Card>
           </TabsContent>
         </Tabs>
-
-        
       </div>
     </div>
   );

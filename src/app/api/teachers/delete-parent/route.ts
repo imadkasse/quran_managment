@@ -7,7 +7,7 @@ export async function DELETE(request: Request) {
 
     const teacher_id = searchParams.get("teacher_id");
     const parentId = searchParams.get("parentId");
-    
+
     // valid the data
     if (!teacher_id || !parentId) {
       return NextResponse.json(
@@ -69,8 +69,9 @@ export async function DELETE(request: Request) {
       success: true,
       message: "Parent deleted successfully",
     });
-  } catch (error: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error("ERROR:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

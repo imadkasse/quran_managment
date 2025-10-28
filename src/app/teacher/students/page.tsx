@@ -9,6 +9,7 @@ const page = async () => {
 
   const students: Student[] | null = await getAllMyStudents(teacher_id);
   const parents: Parent[] | null = await getAllMyParent();
+  console.log(students)
 
   return (
     <div className="">

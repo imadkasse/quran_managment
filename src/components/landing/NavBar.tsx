@@ -3,10 +3,11 @@ import { BookOpen, Menu, X } from "lucide-react";
 import { Button } from "../ui/button";
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 export const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
+  const router = useRouter();
   const fadeInUp = {
     initial: { opacity: 0, y: 60 },
     animate: { opacity: 1, y: 0 },
@@ -68,7 +69,12 @@ export const Navbar = () => {
           </div>
 
           <div className="hidden md:block">
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Button
+              className="bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer"
+              onClick={() => {
+                router.push("/login");
+              }}
+            >
               انضم الآن
             </Button>
           </div>
