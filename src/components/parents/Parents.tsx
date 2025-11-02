@@ -11,27 +11,20 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
 import {
   User,
   Mail,
   Calendar,
-  Eye,
-  Edit,
   Trash,
   Plus,
   Search,
   Users,
-  Filter,
   ChevronLeft,
   ChevronRight,
   AlertCircle,
   Loader2,
+  Phone,
 } from "lucide-react";
 import { AddParentFormData, Parent } from "@/types/types";
 import AddParentModal from "./AddParentModal";
@@ -65,7 +58,6 @@ interface ParentActionsProps {
 
 const ParentActions: React.FC<ParentActionsProps> = ({
   parent,
-  onEdit,
   onDelete,
   isDeleteing,
 }) => {
@@ -102,7 +94,6 @@ interface ParentCardProps {
 
 const ParentCard: React.FC<ParentCardProps> = ({
   parent,
-  onEdit,
   onDelete,
   isDeleteing,
 }) => {
@@ -141,6 +132,7 @@ const ParentCard: React.FC<ParentCardProps> = ({
                   : formatDate(String(Date.now()))}
               </p>
             </div>
+
             {/* {parent.students_count !== undefined && (
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-primary" />
@@ -154,7 +146,6 @@ const ParentCard: React.FC<ParentCardProps> = ({
 
           {/* Actions */}
           <div className="flex justify-center  gap-2 pt-2 border-t border-border">
-    
             <Button
               size="sm"
               onClick={() => onDelete(parent)}
@@ -203,6 +194,9 @@ const ParentTable: React.FC<ParentTableProps> = ({
               <th className="text-right px-6 py-4 text-foreground font-semibold">
                 البريد الإلكتروني
               </th>
+              <th className="text-right px-6 py-4 text-foreground font-semibold">
+                رقم الهاتف
+              </th>
 
               <th className="text-right px-6 py-4 text-foreground font-semibold">
                 تاريخ التسجيل
@@ -239,6 +233,16 @@ const ParentTable: React.FC<ParentTableProps> = ({
                   <div className="flex items-center gap-2">
                     <Mail className="w-4 h-4 text-accent" />
                     <span className="text-foreground">{parent?.email}</span>
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-accent" />
+                    <span className="text-foreground">
+                      {parent?.num_phone === "NULL"
+                        ? "غير محدد"
+                        : parent?.num_phone}
+                    </span>
                   </div>
                 </td>
 
@@ -341,7 +345,7 @@ export default function ParentsPage({
       const res = await axios.post("/api/teachers/add-parent", data);
       // add the parent to parents state
       setParents([...parents, res.data.parent]);
-    } catch (error: any) {
+    } catch (error) {
       console.log(error);
       throw error;
     }

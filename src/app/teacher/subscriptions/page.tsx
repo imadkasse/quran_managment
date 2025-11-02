@@ -1,13 +1,15 @@
 import TeacherSubscriptions from "@/components/subscriptions/TeacherSubscriptions";
 import { getAllMyStudents, getAllMySubscriptions } from "@/services/teacher";
+import { createSupabaseServer } from "@/supabase/server";
 import { Student, Subscription } from "@/types/types";
 import React from "react";
 
 const page = async () => {
-  //
-  const teacher_id = "bcc9c2c1-524b-432b-b0e0-3f74d6b9c11f"; // just for testing
+  const {
+    data: { user },
+  } = await createSupabaseServer().auth.getUser();
   const subs: Subscription[] | [] = (await getAllMySubscriptions()) || [];
-  const students: Student[] | [] = await getAllMyStudents(teacher_id);
+  const students: Student[] | [] = await getAllMyStudents(user?.id as string);
 
   return (
     <div className="">

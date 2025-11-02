@@ -329,6 +329,31 @@ export async function updateSubscription(
   if (error) throw error;
   return data;
 }
+export async function renewSupscription(subsId: string) {
+  const { data, error } = await supabase
+    .from("subscriptions")
+    .update({
+      start_date: new Date().toISOString().split("T")[0],
+      end_date: new Date(new Date().setMonth(new Date().getMonth() + 1))
+        .toISOString()
+        .split("T")[0],
+      status: "PAID",
+    })
+    .eq("id", subsId)
+    .select("*")
+    .single();
+  if (error) {
+    return {
+      status: false,
+      msg: error.message,
+    };
+  }
+  return {
+    status: true,
+    msg: "تم تجديد الاشتراك بنجاح",
+    subscription: data,
+  };
+}
 
 export async function deleteSubscription(subsId: string) {
   const { error } = await supabase

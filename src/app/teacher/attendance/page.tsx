@@ -1,14 +1,17 @@
 import AttendancePage from "@/components/shared/Attendance";
 import { getAllAttendance, getAllMyStudents } from "@/services/teacher";
+import { createSupabaseServer } from "@/supabase/server";
 import { Attendance, Student } from "@/types/types";
 import React from "react";
 
 const page = async () => {
-  const teacher_id = "bcc9c2c1-524b-432b-b0e0-3f74d6b9c11f"; // another time get this from session
+  const {
+    data: { user },
+  } = await createSupabaseServer().auth.getUser();
   const attendances: Attendance[] | [] = (await getAllAttendance(
-    teacher_id
+    user?.id as string
   )) as Attendance[];
-  const students: Student[] | [] = await getAllMyStudents(teacher_id);
+  const students: Student[] | [] = await getAllMyStudents(user?.id as string);
 
   return (
     <div className="">

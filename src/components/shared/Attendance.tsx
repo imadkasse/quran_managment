@@ -23,7 +23,6 @@ import {
   Save,
   RotateCcw,
   ChevronDown,
-  Trash2,
   Edit,
   Eye,
   Loader2,
@@ -57,15 +56,12 @@ import {
   updateAttendanceStatus,
 } from "@/services/teacher";
 import { Attendance, Student } from "@/types/types";
+import { useUser } from "@/store/userStore";
 
 // Types
 type AttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
 
-// Mock Data
-const user = {
-  role: "TEACHER", // غير إلى "PARENT" لاختبار واجهة ولي الأمر
-  user_id: "1f2d6c42-c50e-4a26-bdd5-9b60ed566081", // parent_id for testing
-};
+
 const teacher_id = "bcc9c2c1-524b-432b-b0e0-3f74d6b9c11f"; // another time get this from session
 
 const formatDate = (date: Date) =>
@@ -278,8 +274,10 @@ const TeacherTableRow: React.FC<{
         )
       );
     } catch (error: any) {
+      const err = error as Error;
+
       console.log(error);
-      showToast("error", error.message || "Oops An Error");
+      showToast("error", err.message || "Oops An Error");
     }
   };
   return (
@@ -446,7 +444,10 @@ const StatsCard: React.FC<{
 
 // Main Component
 const AttendancePage = ({ attendanceFetcher, studentsFetcher }: Props) => {
-  const { role, user_id } = user;
+  const { user } = useUser();
+  const role = user?.role;
+  const id = user?.id;
+
   const [attendances, setAttendances] = useState<Attendance[] | []>(
     attendanceFetcher || []
   );
@@ -482,7 +483,7 @@ const AttendancePage = ({ attendanceFetcher, studentsFetcher }: Props) => {
     if (role === "TEACHER") {
       filtered = filtered.filter((s) => s.teacher_id === teacher_id);
     } else if (role === "PARENT") {
-      filtered = filtered.filter((s) => s.parent_id === user_id);
+      filtered = filtered.filter((s) => s.parent_id === id);
     }
 
     if (searchQuery.trim().length > 0) {
@@ -492,7 +493,7 @@ const AttendancePage = ({ attendanceFetcher, studentsFetcher }: Props) => {
     }
 
     return filtered;
-  }, [students, role, user_id, searchQuery]);
+  }, [students, role, id, searchQuery]);
   const attendanceStats = useMemo(() => {
     const stats: Record<AttendanceStatus, number> = {
       PRESENT: 0,
@@ -713,7 +714,8 @@ const AttendancePage = ({ attendanceFetcher, studentsFetcher }: Props) => {
                     key={student.id}
                     student={student}
                     initialAttendance={attendances.find(
-                      (a) => a.student_id === student.id && a.date === TODAY_DATE
+                      (a) =>
+                        a.student_id === student.id && a.date === TODAY_DATE
                     )}
                   />
                 ))}

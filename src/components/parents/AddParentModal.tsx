@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from "react";
 import {
   Dialog,
@@ -20,9 +21,11 @@ import {
   RefreshCw,
   CheckCircle,
   AlertCircle,
+  Phone,
 } from "lucide-react";
 import { AddParentFormData } from "@/types/types";
 import showToast from "@/utils/showToast";
+import { useUser } from "@/store/userStore";
 
 // Types
 
@@ -59,14 +62,15 @@ const getPasswordStrength = (
 export default function AddParentModal({
   open,
   onOpenChange,
-
   onAddParent,
 }: AddParentModalProps) {
+  const { user } = useUser();
   const [formData, setFormData] = useState<AddParentFormData>({
     username: "",
     email: "",
     password: "",
-    teacher_id: "bcc9c2c1-524b-432b-b0e0-3f74d6b9c11f",
+    teacher_id: user?.id || "",
+    num_phone: null,
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -74,34 +78,30 @@ export default function AddParentModal({
   const [errors, setErrors] = useState<Partial<AddParentFormData>>({});
 
   // Validate Form
-  const validateForm = (): boolean => {
-    const newErrors: Partial<AddParentFormData> = {};
+  // const validateForm = (): boolean => {
+  //   const newErrors: Partial<AddParentFormData> = {};
 
-    if (!formData.username.trim()) {
-      newErrors.username = "اسم المستخدم مطلوب";
-    } else if (formData.username.length < 3) {
-      newErrors.username = "اسم المستخدم يجب أن يكون 3 أحرف على الأقل";
-    }
+  //   if (!formData.username.trim()) {
+  //     newErrors.username = "اسم المستخدم مطلوب";
+  //   } else if (formData.username.length < 3) {
+  //     newErrors.username = "اسم المستخدم يجب أن يكون 3 أحرف على الأقل";
+  //   }
 
-    if (!formData.email.trim()) {
-      newErrors.email = "البريد الإلكتروني مطلوب";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "البريد الإلكتروني غير صالح";
-    }
+  //   if (!formData.email.trim()) {
+  //     newErrors.email = "البريد الإلكتروني مطلوب";
+  //   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+  //     newErrors.email = "البريد الإلكتروني غير صالح";
+  //   }
 
-    if (!formData.password) {
-      newErrors.password = "كلمة المرور مطلوبة";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "كلمة المرور يجب أن تكون 6 أحرف على الأقل";
-    }
+  //   if (!formData.password) {
+  //     newErrors.password = "كلمة المرور مطلوبة";
+  //   } else if (formData.password.length < 6) {
+  //     newErrors.password = "كلمة المرور يجب أن تكون 6 أحرف على الأقل";
+  //   }
 
-    if (!formData.teacher_id) {
-      newErrors.teacher_id = "يجب اختيار معلم";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  //   setErrors(newErrors);
+  //   return Object.keys(newErrors).length === 0;
+  // };
 
   // Handle Submit
   const handleSubmit = async (e: React.FormEvent) => {
@@ -119,14 +119,16 @@ export default function AddParentModal({
         email: "",
         password: "",
         teacher_id: "",
+        num_phone: null,
       });
       setErrors({});
       onOpenChange(false);
-      showToast('success' , 'تم إضافة الولي بنجاح')
+      showToast("success", "تم إضافة الولي بنجاح");
+    } catch (error: any) {
+      const err = error as Error;
 
-    } catch (err: any) {
-      showToast('error' , err.message || "حدث خطأ أثناء إضافة الولي")
-      console.log(err);
+      console.log(error);
+      showToast("error", err.message || "حدث خطأ أثناء إضافة الولي");
     } finally {
       setIsLoading(false);
     }
@@ -218,6 +220,29 @@ export default function AddParentModal({
             </div>
             {errors.email && (
               <p className="text-sm text-destructive">{errors.email}</p>
+            )}
+          </div>
+          {/* Phone Field */}
+          <div className="space-y-2">
+            <Label htmlFor="num_phone" className="text-foreground font-medium">
+              رقم الهاتف
+            </Label>
+            <div className="relative">
+              <Phone className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                id="num_phone"
+                type="tel"
+                placeholder="0661234567"
+                value={formData.num_phone || ""}
+                onChange={(e) => handleChange("num_phone", e.target.value)}
+                className={`pr-10 border-border focus:ring-primary ${
+                  errors.email ? "border-destructive" : ""
+                }`}
+                disabled={isLoading}
+              />
+            </div>
+            {errors.num_phone && (
+              <p className="text-sm text-destructive">{errors.num_phone}</p>
             )}
           </div>
 

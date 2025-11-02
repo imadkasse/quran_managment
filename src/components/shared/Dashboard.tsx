@@ -568,7 +568,7 @@ const Dashboard: React.FC = () => {
     }
   };
   useEffect(() => {
-    console.log(userData)
+    console.log('user data :',userData)
   }, [userData]);
 
   return (

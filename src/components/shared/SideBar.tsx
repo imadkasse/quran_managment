@@ -14,6 +14,8 @@ import {
   UserStar,
   TrendingUp,
   CreditCard,
+  LogOut,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -22,6 +24,8 @@ import useTheme from "@/hooks/useTheme";
 import Link from "next/link";
 import { useUser } from "@/store/userStore";
 import { Database } from "@/types/supabase.types";
+import showToast from "@/utils/showToast";
+import { logout } from "@/services/auth";
 
 type UserRole = Database["public"]["Enums"]["user_role"];
 
@@ -98,9 +102,9 @@ const roleConfigs: Record<UserRole, RoleConfig> = {
 
 const SideBar: React.FC = () => {
   const { user } = useUser();
-  
-  const currentConfig = roleConfigs[user?.role as UserRole || "TEACHER"];
-  
+
+  const currentConfig = roleConfigs[(user?.role as UserRole) || "TEACHER"];
+
   const router = useRouter();
   const pathName = usePathname();
   const [activeLink, setActiveLink] = useState(pathName);
@@ -108,10 +112,21 @@ const SideBar: React.FC = () => {
   const { isDarkMode, toggleTheme } = useTheme();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  const handleLinkClick = (href: string) => {
-    setActiveLink(href);
-    setIsMobileOpen(false);
-    router.push(href);
+  // loading
+  const [isLoadingLogout, setIsLoadingLogout] = useState<boolean>(false);
+
+  const handleLogout = async () => {
+    setIsLoadingLogout(true);
+    try {
+      await logout();
+      router.push("/");
+    } catch (error) {
+      const err = error as Error;
+      console.log(error);
+      showToast("error", err.message || "Oops An Error");
+    } finally {
+      setIsLoadingLogout(false);
+    }
   };
 
   return (
@@ -226,6 +241,32 @@ const SideBar: React.FC = () => {
                   </Link>
                 );
               })}
+              <Button
+                onClick={() => handleLogout()}
+                disabled={isLoadingLogout}
+                className={`
+                      w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium
+                      transition-all duration-200 ease-in-out group relative overflow-hidden
+                     bg-inherit cursor-pointer
+                             shadow-md
+                         text-white  hover:bg-[var(--destructive)] hover:text-[var(--accent-foreground)] hover:-translate-x-1
+              
+                    `}
+              >
+                {isLoadingLogout ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    {" "}
+                    <LogOut
+                      className={`w-5 h-5 transition-colors 
+                    text-current group-hover:text-current
+                  `}
+                    />
+                    <span className="flex-1 text-right">تسجيل الخروج</span>
+                  </>
+                )}
+              </Button>
             </div>
           </nav>
 

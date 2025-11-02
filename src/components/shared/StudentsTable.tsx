@@ -684,24 +684,28 @@ export const StudentsTable = ({ studentsFetcher, parentsFetcher }: Props) => {
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          handleOpenDialog(student);
-                        }}
-                        className="h-8 w-8 p-0 hover:bg-accent cursor-pointer"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteClick(student?.id)}
-                        className={`h-8 w-8 p-0 text-destructive cursor-pointer hover:text-destructive hover:bg-destructive/10 `}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {user?.role === "TEACHER" && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              handleOpenDialog(student);
+                            }}
+                            className="h-8 w-8 p-0 hover:bg-accent cursor-pointer"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteClick(student?.id)}
+                            className={`h-8 w-8 p-0 text-destructive cursor-pointer hover:text-destructive hover:bg-destructive/10 `}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -733,13 +737,15 @@ export const StudentsTable = ({ studentsFetcher, parentsFetcher }: Props) => {
                 </p>
               </div>
             </div>
-            <Button
-              onClick={() => setShowAddModal(true)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 px-6 py-6 cursor-pointer shadow-lg hover:shadow-xl transition-all"
-            >
-              <UserPlus className="w-5 h-5" />
-              إضافة طالب
-            </Button>
+            {user?.role === "TEACHER" && (
+              <Button
+                onClick={() => setShowAddModal(true)}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 px-6 py-6 cursor-pointer shadow-lg hover:shadow-xl transition-all"
+              >
+                <UserPlus className="w-5 h-5" />
+                إضافة طالب
+              </Button>
+            )}
           </div>
         </CardHeader>
       </Card>

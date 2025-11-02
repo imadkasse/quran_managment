@@ -64,7 +64,7 @@ export default function TeacherEvaluations({
   const [evaluations, setEvaluations] = useState<Evaluation[]>(
     evaluationFetcher || []
   );
-  const [students, setStudents] = useState<Student[]>(studentsFetchers || []);
+  const [students] = useState<Student[]>(studentsFetchers || []);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -162,9 +162,10 @@ export default function TeacherEvaluations({
 
         setEvaluations((prev) => [newEvaluation, ...prev]);
         showToast("success", "تم إنشاء تقدم بنجاح");
-      } catch (error: any) {
+      } catch (error) {
+        const err = error as Error
         console.log(error);
-        showToast("error", error.message || `Error when deleteing Evaluation`);
+        showToast("error", err.message || `Error when deleteing Evaluation`);
       } finally {
         setIsCreatedLoading(false);
       }
@@ -189,9 +190,10 @@ export default function TeacherEvaluations({
             ev.id === selectedEvaluation.id ? updatedEvaluation : ev
           )
         );
-      } catch (error: any) {
+      } catch (error) {
+        const err = error as Error
         console.log(error);
-        showToast("error", error.message);
+        showToast("error", err.message);
       } finally {
         setIsEditeingLoading(false);
       }
@@ -218,8 +220,10 @@ export default function TeacherEvaluations({
         showToast("success", "تم حذف التقدم بنجاح");
       }
     } catch (error: any) {
+        const err = error as Error
+
       console.log(error);
-      showToast("error", error.message || "Oops An Error");
+      showToast("error", err.message || "Oops An Error");
     } finally {
       setIsDeleteingLoading(false);
     }

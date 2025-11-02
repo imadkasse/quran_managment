@@ -20,6 +20,7 @@ export type AddParentFormData = {
   email: string;
   password: string;
   teacher_id: string;
+  num_phone: string | null;
 };
 
 type ParentInStudent = {

@@ -48,7 +48,7 @@ import { Label } from "@/components/ui/label";
 import { Database } from "@/types/supabase.types";
 import { Student } from "@/types/types";
 import showToast from "@/utils/showToast";
-import { insertSubscription } from "@/services/teacher";
+import { insertSubscription, renewSupscription } from "@/services/teacher";
 
 type Subscription = {
   id: string;
@@ -82,11 +82,13 @@ export default function TeacherSubscriptions({
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [viewSubscription, setViewSubscription] = useState<Subscription | null>(
     null
   );
   // loadings
   const [isLoadingCreating, setIsLoadingCreating] = useState<boolean>(false);
+  const [isLoadingRenew, setIsLoadingRenew] = useState<boolean>(false);
 
   // Form state
   const [formData, setFormData] = useState<SubscriptionInsert>();
@@ -100,14 +102,14 @@ export default function TeacherSubscriptions({
 
   // Calculate summary stats
   const stats = useMemo(() => {
-    const active = subscriptions.filter((s) => s.status === "PAID").length;
+    const PAID = subscriptions.filter((s) => s.status === "PAID").length;
     const expired = subscriptions.filter((s) => s.status === "EXPIRED").length;
     const pending = subscriptions.filter((s) => s.status === "PENDING").length;
     const totalRevenue = subscriptions
       .filter((s) => s.status === "PAID")
       .reduce((sum, s) => sum + s.amount, 0);
 
-    return { active, expired, pending, totalRevenue };
+    return { PAID, expired, pending, totalRevenue };
   }, [subscriptions]);
 
   // Filter subscriptions
@@ -149,23 +151,28 @@ export default function TeacherSubscriptions({
   };
 
   // Handle renew
-  const handleRenew = (sub: Subscription) => {
-    const endDate = new Date(sub.end_date);
-    const newStartDate = new Date(endDate);
-    newStartDate.setDate(newStartDate.getDate() + 1);
-    const newEndDate = new Date(newStartDate);
-    newEndDate.setMonth(newEndDate.getMonth() + 1);
-
-    setFormData({
-      student_id: sub.student_id,
-      status: "PAID",
-      amount: sub.amount,
-      start_date: newStartDate.toISOString().split("T")[0],
-      end_date: newEndDate.toISOString().split("T")[0],
-      note: "Renewal",
-      created_by: sub.created_by,
-    });
-    setIsDialogOpen(true);
+  const handleRenew = async (sub: Subscription) => {
+    setIsLoadingRenew(true);
+    try {
+      const isRenew = await renewSupscription(sub.id);
+      if (!isRenew.status) {
+        showToast("error", isRenew.msg || "حدث خطأ أثناء تجديد الاشتراك");
+        return;
+      }
+      showToast("success", isRenew.msg);
+      console.log(isRenew.subscription);
+      setSubscriptions(
+        subscriptions.map(
+          (s) => (s.id === sub.id ? isRenew.subscription : s) as Subscription
+        )
+      );
+    } catch (error) {
+      const err = error as Error;
+      console.log(error);
+      showToast("error", err.message || "حدث خطأ أثناء تجديد الاشتراك");
+    } finally {
+      setIsLoadingRenew(false);
+    }
   };
 
   // Handle cancel
@@ -203,7 +210,7 @@ export default function TeacherSubscriptions({
 
   // Format date
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+    return new Date(dateString).toLocaleDateString("ar-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -417,7 +424,7 @@ export default function TeacherSubscriptions({
               <CreditCard className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.active}</div>
+              <div className="text-2xl font-bold">{stats.PAID}</div>
               <p className="text-xs text-muted-foreground">نشطة حالياً</p>
             </CardContent>
           </Card>
@@ -561,8 +568,13 @@ export default function TeacherSubscriptions({
                               size="sm"
                               variant="ghost"
                               onClick={() => handleRenew(sub)}
+                              disabled={isLoadingRenew}
                             >
-                              <RefreshCw className="h-4 w-4" />
+                              {isLoadingRenew ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <RefreshCw className="h-4 w-4" />
+                              )}
                             </Button>
                           )}
                           {sub.status === "PAID" && (
@@ -640,9 +652,16 @@ export default function TeacherSubscriptions({
                           variant="outline"
                           className="flex-1"
                           onClick={() => handleRenew(sub)}
+                          disabled={isLoadingRenew}
                         >
-                          <RefreshCw className="h-4 w-4 mr-1" />
-                          تجديد
+                          {isLoadingRenew ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <>
+                              <RefreshCw className="h-4 w-4 mr-1" />
+                              تجديد
+                            </>
+                          )}
                         </Button>
                       )}
                       {sub.status === "PAID" && (

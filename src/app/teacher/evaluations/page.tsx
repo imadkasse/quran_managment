@@ -1,16 +1,16 @@
 import TeacherEvaluations from "@/components/evaluations/TeacherEvaluations";
 import { getAllMyEvaluations, getAllMyStudents } from "@/services/teacher";
+import { createSupabaseServer } from "@/supabase/server";
 import { Evaluation } from "@/types/types";
 import React from "react";
 
 const page = async () => {
-  const teacher_id = "bcc9c2c1-524b-432b-b0e0-3f74d6b9c11f"; // just for testing
+  const {
+    data: { user },
+  } = await createSupabaseServer().auth.getUser();
+  const students = await getAllMyStudents(user?.id as string);
 
-  const students = await getAllMyStudents(teacher_id);
-
-  const evaluations: Evaluation[] | null = await getAllMyEvaluations(
-    teacher_id
-  );
+  const evaluations: Evaluation[] | null = await getAllMyEvaluations(user?.id as string);
   return (
     <div className="">
       <TeacherEvaluations

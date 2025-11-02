@@ -8,19 +8,19 @@ import { useRouter } from "next/navigation";
 export const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
-  const fadeInUp = {
-    initial: { opacity: 0, y: 60 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.6 },
-  };
+  // const fadeInUp = {
+  //   initial: { opacity: 0, y: 60 },
+  //   animate: { opacity: 1, y: 0 },
+  //   transition: { duration: 0.6 },
+  // };
 
-  const staggerContainer = {
-    animate: {
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
+  // const staggerContainer = {
+  //   animate: {
+  //     transition: {
+  //       staggerChildren: 0.1,
+  //     },
+  //   },
+  // };
 
   return (
     <motion.nav

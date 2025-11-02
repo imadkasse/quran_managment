@@ -25,8 +25,8 @@ export default function NotFound() {
 
         {/* Description */}
         <p className="mb-8 text-base text-muted-foreground sm:text-lg">
-          Sorry, we couldn't find the page you're looking for. It might have
-          been moved, deleted, or the URL might be incorrect.
+          {`Sorry, we couldn't find the page you're looking for. It might have
+          been moved, deleted, or the URL might be incorrect.`}
         </p>
 
         {/* Actions */}

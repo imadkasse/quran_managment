@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/supabase/server";
 
+
 export async function POST(request: Request) {
   try {
-    const { username, email, password, teacher_id } = await request.json();
-    
-    if (!password || !email) {
+    const { username, email, password, num_phone, teacher_id } =
+      await request.json();
+
+    if (!password || !email || !num_phone) {
       return NextResponse.json(
-        { error: "password & email are required" },
+        { error: "password & email or phone number are required" },
         { status: 400 }
       );
     }
@@ -40,6 +42,7 @@ export async function POST(request: Request) {
         email,
         role: "PARENT",
         teacher_id,
+        num_phone,
       })
       .select()
       .single();
